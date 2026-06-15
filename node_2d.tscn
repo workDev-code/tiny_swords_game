@@ -1,0 +1,26 @@
+[gd_scene format=3 uid="uid://daij3ihhwtfhn"]
+
+[ext_resource type="PackedScene" uid="uid://b4brpv44cvpvg" path="res://player.tscn" id="1_epypp"]
+[ext_resource type="PackedScene" uid="uid://b0pmy7jhkerl6" path="res://enemy.tscn" id="2_0hol4"]
+
+[sub_resource type="WorldBoundaryShape2D" id="WorldBoundaryShape2D_0e48y"]
+
+[node name="Game" type="Node2D" unique_id=1724916428]
+position = Vector2(14, -55)
+
+[node name="Player" parent="." unique_id=54725058 instance=ExtResource("1_epypp")]
+position = Vector2(465, 224)
+
+[node name="Enemy" parent="." unique_id=1942245418 instance=ExtResource("2_0hol4")]
+position = Vector2(734, 220)
+
+[node name="Enemy2" parent="." unique_id=1727934692 instance=ExtResource("2_0hol4")]
+position = Vector2(730, 411)
+
+[node name="FLoorBoudary" type="StaticBody2D" parent="." unique_id=6764219]
+position = Vector2(-14, 567)
+metadata/_edit_group_ = true
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="FLoorBoudary" unique_id=9516607]
+shape = SubResource("WorldBoundaryShape2D_0e48y")
+debug_color = Color(0, 0.6, 0.13725491, 0.41960785)
