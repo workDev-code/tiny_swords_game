@@ -63,8 +63,12 @@ animations = [{
 "speed": 10.0
 }]
 
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_4gyqm"]
+radius = 27.0
+height = 78.0
+
 [node name="Enemy" type="CharacterBody2D" unique_id=1942245418]
-position = Vector2(768, 292)
+position = Vector2(767, 289)
 script = ExtResource("1_4gyqm")
 metadata/_edit_group_ = true
 
@@ -77,3 +81,8 @@ sprite_frames = SubResource("SpriteFrames_flf07")
 animation = &"new_animation"
 autoplay = "new_animation"
 frame_progress = 0.5367509
+
+[node name="Hurtbox" type="Area2D" parent="." unique_id=1163269087]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hurtbox" unique_id=1497796053]
+shape = SubResource("CapsuleShape2D_4gyqm")

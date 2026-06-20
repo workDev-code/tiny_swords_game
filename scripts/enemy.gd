@@ -15,11 +15,8 @@ signal damaged(new_hp: int)  # Báo lượng máu còn lại sau khi bị đấm
 func _ready() -> void:
 	current_hp = max_hp
 	
-	# Tìm Player trong Scene khi Game bắt đầu.
-	# Cách này giả định Player của bạn nằm trong một Group tên là "player"
-	var players = get_tree().get_nodes_in_group("player")
-	if players.size() > 0:
-		player = players[0]
+	# Lấy Player từ PlayerGlobal (được đăng ký trong player.gd)
+	player = PlayerGlobal.current_player
 
 func _physics_process(delta: float) -> void:
 	# Áp dụng trọng lực nếu Enemy đang ở trên không
@@ -46,10 +43,10 @@ func look_at_player() -> void:
 	
 	if direction_to_player > 0:
 		# Player ở bên phải -> Không lật ảnh (Giả định Sprite mặc định của bạn nhìn sang PHẢI)
-		$Sprite2D.flip_h = false 
+		$AnimatedSprite2D.flip_h = false 
 	elif direction_to_player < 0:
 		# Player ở bên trái -> Lật ảnh sang trái
-		$Sprite2D.flip_h = true
+		$AnimatedSprite2D.flip_h = true
 
 # Chịu trách nhiệm nhận sát thương và cập nhật HP
 func take_damage(damage: int) -> void:
