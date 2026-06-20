@@ -1,118 +1,159 @@
 extends CharacterBody2D
 
+# --- CONSTANTS ---
 const SPEED = 300.0
+const JUMP_VELOCITY = -400.0
 
-enum State { IDLE, RUN, ATTACK }
+# --- ENUMS ---
 enum Facing { RIGHT, LEFT, UP, DOWN }
 
+# --- VARIABLES ---
 @onready var animated_sprite: AnimatedSprite2D = $AnimatedSprite2D
+@onready var hitbox_collision: CollisionShape2D = $Hitbox/CollisionShape2D
+@export var attack_damage: int = 20
 
-var state: State = State.IDLE
+var gravity: float = ProjectSettings.get_setting("physics/2d/default_gravity")
+
 var facing: Facing = Facing.RIGHT
 var facing_left := false
-var current_animation: StringName = resolve_idle_animation_name()
 
+# Tách biệt rõ ràng: locomotion và action
+var is_attacking := false
+var current_animation: StringName = &"idle_side"
+
+
+# --- READY ---
 func _ready() -> void:
-	# Khi animation chạy XONG ĐẾN FRAME CUỐI CÙNG, nó sẽ gọi hàm thoát trạng thái attack
-	animated_sprite.animation_finished.connect(_on_animated_sprite_animation_finished)
+	# Đăng ký Player vào bảng thông báo toàn cục để các Enemy có thể truy cập
+	PlayerGlobal.current_player = self
 
-func _physics_process(_delta: float) -> void:
-	## người chơi bấm hướng nào?
-	var direction := get_input_direction()
-	
-	# Nhân vật đang ở trạng thái (State) hành động nào?
-	resolve_locomotion_state(direction)
+	if animated_sprite:
+		animated_sprite.animation_finished.connect(_on_animation_finished)
 
-	## VẤN ĐỀ : Trạng thái chiến đấu có cần được ưu tiên hơn trạng thái di chuyển không?
-    # Giải quyết: Kiểm tra nút bấm tấn công. Nếu có, "đè" (override) trạng thái di chuyển ở trên thành trạng thái Attack.
-	check_and_trigger_attack(direction)
-	
-	#tính vận tốc
-	calculate_velocity(direction)
 
-	## Nhân vật đang nhìn về hướng nào
-	apply_facing_direction(direction)
+# --- PHYSICS PROCESS ---
+func _physics_process(delta: float) -> void:
+	var direction = _get_input_direction()
 	
-	## VẤN ĐỀ : Làm sao để người chơi "nhìn thấy" hành động của nhân vật khớp với logic ngầm bên trong?
-	sync_sprite_animation(direction)
+	_update_facing(direction)
+	_handle_attack()
+	_handle_movement(direction, delta)
+
+	_update_animation()
 	
 	move_and_slide()
 
-func get_input_direction() -> Vector2:
-	var direction := Vector2.ZERO
-	direction.x = Input.get_axis("move_left", "move_right")
-	direction.y = Input.get_axis("move_up", "move_down")
-	return direction.normalized() if direction != Vector2.ZERO else Vector2.ZERO
+# ====================== INPUT & FACING ======================
+func _get_input_direction() -> Vector2:
+	var dir = Vector2.ZERO
+	dir.x = Input.get_axis("move_left", "move_right")
+	dir.y = Input.get_axis("move_up", "move_down")
+	return dir.normalized()
 
-func resolve_locomotion_state(direction: Vector2) -> void:
-	if state == State.ATTACK:
-		return
-	state = State.IDLE if direction == Vector2.ZERO else State.RUN
-
-func check_and_trigger_attack(direction: Vector2) -> void:
-	if not Input.is_action_just_pressed("attack") or state == State.ATTACK:
-		return
-
-	if direction != Vector2.ZERO:
-		apply_facing_direction(direction)
-
-	state = State.ATTACK
-
-
-func calculate_velocity(direction: Vector2) -> void:
-	if state == State.ATTACK or direction == Vector2.ZERO:
-		velocity = Vector2.ZERO
-	else:
-		velocity = direction * SPEED
-
-func apply_facing_direction(direction: Vector2) -> void:
+func _update_facing(direction: Vector2) -> void:
 	if direction == Vector2.ZERO:
 		return
-
-	if direction.x < 0.0:
+	
+	# Flip sprite
+	if direction.x < 0:
 		facing_left = true
-	elif direction.x > 0.0:
+	elif direction.x > 0:
 		facing_left = false
-
+	
+	# Xác định Facing (ưu tiên trục có biên độ lớn hơn)
 	if abs(direction.x) > abs(direction.y):
-		facing = Facing.RIGHT if direction.x > 0.0 else Facing.LEFT
+		facing = Facing.RIGHT if direction.x > 0 else Facing.LEFT
 	else:
-		facing = Facing.DOWN if direction.y > 0.0 else Facing.UP
+		facing = Facing.DOWN if direction.y > 0 else Facing.UP
 
-func sync_sprite_animation(direction: Vector2) -> void:
-	animated_sprite.flip_h = facing_left # Đơn giản hóa việc lật hình
+# ====================== ATTACK ======================
+func _handle_attack() -> void:
+	if Input.is_action_just_pressed("attack") and not is_attacking:
+		is_attacking = true
+		# Attack animation sẽ được resolve ở _update_animation()
+		# 1. Bật chốt an toàn (Mở Hitbox để sẵn sàng gây sát thương)
+		if hitbox_collision:
+			hitbox_collision.disabled = false
+		
+		# 2. Tính toán lượng sát thương bằng hàm attack() có sẵn của bạn
+		var total_damage = attack() 
+		
+		# 3. Log (in) lượng sát thương ra màn hình Output
+		print("Player tấn công! Sát thương gây ra: ", total_damage)
+
+func _on_animation_finished() -> void:
+	if is_attacking:
+		is_attacking = false
+		# Tắt chốt an toàn (Đóng Hitbox sau khi tấn công xong)
+		if hitbox_collision:
+			hitbox_collision.disabled = true
+
+# ====================== MOVEMENT ======================
+func _handle_movement(direction: Vector2, delta: float) -> void:
+	# Gravity
+	if not is_on_floor():
+		velocity.y += gravity * delta
+	else:
+		velocity.y = 0
+	
+	# Jump
+	if Input.is_action_just_pressed("jump") and is_on_floor() and not is_attacking:
+		velocity.y = JUMP_VELOCITY
+	
+	# Horizontal movement
+	if is_attacking and is_on_floor():
+		velocity.x = 0  # Đứng yên khi attack trên mặt đất
+	else:
+		if direction.x != 0:
+			velocity.x = direction.x * SPEED
+		else:
+			velocity.x = move_toward(velocity.x, 0, SPEED)
+
+# ====================== ANIMATION ======================
+func _update_animation() -> void:
+	animated_sprite.flip_h = facing_left
 	animated_sprite.flip_v = false
 	
-	var animation_name := resolve_animation_name()
-	if animation_name != current_animation:
-		current_animation = animation_name
-		animated_sprite.play(animation_name)
+	var new_anim = _resolve_animation_name()
+	
+	if new_anim != current_animation:
+		current_animation = new_anim
+		animated_sprite.play(new_anim)
 
-func resolve_animation_name() -> StringName:
-	match state:
-		State.IDLE: return resolve_idle_animation_name()
-		State.RUN: return resolve_run_animation_name()
-		State.ATTACK: return resolve_attack_animation_name()
-		_: return &"idle_side"
+func _resolve_animation_name() -> StringName:
+	# 1. Attack có độ ưu tiên cao nhất
+	if is_attacking:
+		match facing:
+			Facing.UP:    return &"attack_up"
+			Facing.DOWN:  return &"attack_down"
+			_:            return &"attack_side"
+	
+	# 2. Jump
+	if not is_on_floor():
+		return &"jump"
+	
+	# 3. Locomotion
+	var direction = _get_input_direction()  # dùng lại hàm cũ để kiểm tra đang di chuyển không
+	
+	if direction == Vector2.ZERO:
+		return _get_idle_animation()
+	else:
+		return _get_run_animation()
 
-func resolve_idle_animation_name() -> StringName:
-	return &"idle_side" # Thêm logic idle_down / idle_up nếu game của bạn có hỗ trợ
+func _get_idle_animation() -> StringName:
+	# match facing:
+	#     Facing.UP:    return &"idle_up"
+	#     Facing.DOWN:  return &"idle_down"
+	#     _:            return &"idle_side"
+	return &"idle_side"  # tạm thời, bạn có thể mở rộng sau
 
-func resolve_run_animation_name() -> StringName:
+func _get_run_animation() -> StringName:
 	match facing:
-		Facing.DOWN: return &"run_down"
-		Facing.UP: return &"run_up" # Thêm trường hợp chạy lên trên
-		_: return &"run"
+		Facing.UP:    return &"run_up"
+		Facing.DOWN:  return &"run_down"
+		_:            return &"run"
 
-func resolve_attack_animation_name() -> StringName:
-	match facing:
-		Facing.UP: return &"attack_up"
-		Facing.DOWN: return &"attack_down"
-		_: return &"attack_side"
-
-func _on_animated_sprite_animation_finished() -> void:
-	if state == State.ATTACK:
-		exit_attack_state()
-
-func exit_attack_state() -> void:
-	state = State.IDLE # Trả về mặc định, frame sau _physics_process tự cập nhật lại nếu đang giữ nút di chuyển
+func attack(base_damage: int = 0) -> int:
+	if base_damage <= 0:
+		return attack_damage
+	return base_damage + attack_damage

@@ -15,7 +15,7 @@ position = Vector2(465, 224)
 position = Vector2(734, 220)
 
 [node name="Enemy2" parent="." unique_id=1727934692 instance=ExtResource("2_0hol4")]
-position = Vector2(730, 411)
+position = Vector2(634, 271)
 
 [node name="FLoorBoudary" type="StaticBody2D" parent="." unique_id=6764219]
 position = Vector2(-14, 567)
