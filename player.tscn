@@ -387,7 +387,7 @@ radius = 73.0
 height = 146.0
 
 [node name="Player" type="CharacterBody2D" unique_id=54725058]
-position = Vector2(183, 363)
+position = Vector2(203, 372)
 script = ExtResource("2_onrkg")
 metadata/_edit_group_ = true
 
@@ -396,7 +396,7 @@ position = Vector2(-3, 8)
 sprite_frames = SubResource("SpriteFrames_4d7sh")
 animation = &"attack_down"
 autoplay = "idle_side"
-frame_progress = 0.00094248686
+frame_progress = 0.034507547
 metadata/_edit_group_ = true
 
 [node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="." unique_id=695328912]
@@ -406,3 +406,14 @@ polygon = PackedVector2Array(-2, -43, 2, -40, 5, -36, 5, -25, 11, -20, 15, -12, 
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Hitbox" unique_id=1923677484]
 shape = SubResource("CapsuleShape2D_onrkg")
+disabled = true
+
+[node name="ProgressBar" type="ProgressBar" parent="." unique_id=4612706]
+offset_left = -55.0
+offset_top = -66.0
+offset_right = 49.0
+offset_bottom = -39.0
+max_value = 1000.0
+value = 1000.0
+
+[connection signal="area_entered" from="Hitbox" to="." method="_on_hitbox_area_entered"]

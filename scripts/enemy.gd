@@ -1,7 +1,10 @@
 extends CharacterBody2D
 
 @export var max_hp: int = 100
+@onready var health_bar = $HealthBar
+
 var current_hp: int = 100
+
 
 # Lấy trọng lực mặc định từ cấu hình hệ thống của Project
 var gravity: float = ProjectSettings.get_setting("physics/2d/default_gravity")
@@ -12,8 +15,11 @@ var player: Node2D = null
 signal died()                # Cho các node khác biết Enemy đã chết
 signal damaged(new_hp: int)  # Báo lượng máu còn lại sau khi bị đấm
 
+
 func _ready() -> void:
 	current_hp = max_hp
+	health_bar.max_value = max_hp
+	health_bar.value = current_hp
 	
 	# Lấy Player từ PlayerGlobal (được đăng ký trong player.gd)
 	player = PlayerGlobal.current_player
@@ -54,8 +60,12 @@ func take_damage(damage: int) -> void:
 		return
 		
 	current_hp = max(0, current_hp - damage)  
+	health_bar.value = current_hp
 	damaged.emit(current_hp)                   
 	
+	# Câu lệnh log của Enemy nằm ở đây:
+	print(name, " bị đánh! Mất ", damage, " máu. Máu còn lại: ", current_hp)
+
 	if current_hp <= 0 and not is_queued_for_deletion():
 		die()
 

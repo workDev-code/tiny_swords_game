@@ -36,7 +36,9 @@ func _physics_process(delta: float) -> void:
 	var direction = _get_input_direction()
 	
 	_update_facing(direction)
+
 	_handle_attack()
+
 	_handle_movement(direction, delta)
 
 	_update_animation()
@@ -157,3 +159,11 @@ func attack(base_damage: int = 0) -> int:
 	if base_damage <= 0:
 		return attack_damage
 	return base_damage + attack_damage
+
+func _on_hitbox_area_entered(area: Area2D) -> void:
+	print(area.name)
+	if area.name == "Hurtbox":
+		var enemy = area.get_parent()
+
+		if enemy.has_method("take_damage"):
+			enemy.take_damage(attack())
