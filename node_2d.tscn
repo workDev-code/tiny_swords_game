@@ -6,7 +6,7 @@
 [sub_resource type="WorldBoundaryShape2D" id="WorldBoundaryShape2D_0e48y"]
 
 [node name="Game" type="Node2D" unique_id=1724916428]
-position = Vector2(14, -55)
+position = Vector2(-99, 4)
 
 [node name="Player" parent="." unique_id=54725058 instance=ExtResource("1_epypp")]
 position = Vector2(465, 224)

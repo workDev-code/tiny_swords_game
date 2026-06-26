@@ -10,12 +10,16 @@ enum Facing { RIGHT, LEFT, UP, DOWN }
 # --- VARIABLES ---
 @onready var animated_sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var hitbox_collision: CollisionShape2D = $Hitbox/CollisionShape2D
+@onready var health_bar: ProgressBar = $HealthBar
+
 @export var attack_damage: int = 20
+@export var max_hp: int = 100
 
 var gravity: float = ProjectSettings.get_setting("physics/2d/default_gravity")
 
 var facing: Facing = Facing.RIGHT
 var facing_left := false
+var current_hp: int = 100
 
 # Tách biệt rõ ràng: locomotion và action
 var is_attacking := false
@@ -26,6 +30,10 @@ var current_animation: StringName = &"idle_side"
 func _ready() -> void:
 	# Đăng ký Player vào bảng thông báo toàn cục để các Enemy có thể truy cập
 	PlayerGlobal.current_player = self
+
+	current_hp = max_hp
+	health_bar.max_value = max_hp
+	health_bar.value = current_hp
 
 	if animated_sprite:
 		animated_sprite.animation_finished.connect(_on_animation_finished)
@@ -167,3 +175,14 @@ func _on_hitbox_area_entered(area: Area2D) -> void:
 
 		if enemy.has_method("take_damage"):
 			enemy.take_damage(attack())
+func take_damage(damage: int) -> void:
+	if damage <= 0:
+		return
+
+	current_hp = max(0, current_hp - damage)
+	health_bar.value = current_hp
+	print("Player bị đánh! Mất ", damage, " máu. Máu còn lại: ", current_hp)
+
+	if current_hp <= 0:
+		print("Player đã chết!")
+		# TODO: Thêm hiệu ứng chết / game over
