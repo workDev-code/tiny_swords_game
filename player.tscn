@@ -388,9 +388,8 @@ radius = 73.0
 height = 146.0
 
 [node name="Player" type="CharacterBody2D" unique_id=54725058]
-position = Vector2(110, 323)
+position = Vector2(578, 330)
 script = ExtResource("2_onrkg")
-metadata/_edit_group_ = true
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1951693515]
 position = Vector2(-3, 8)
@@ -410,5 +409,11 @@ shape = SubResource("CapsuleShape2D_onrkg")
 disabled = true
 
 [node name="HealthBar" parent="." unique_id=81853867 instance=ExtResource("3_i3pqv")]
+max_value = 1000.0
+value = 1000.0
+
+[node name="Camera2D" type="Camera2D" parent="." unique_id=1265457697]
+enabled = false
+metadata/_edit_group_ = true
 
 [connection signal="area_entered" from="Hitbox" to="." method="_on_hitbox_area_entered"]
