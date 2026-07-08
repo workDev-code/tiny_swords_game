@@ -31,6 +31,10 @@ signal damaged(new_hp: int)  # Báo lượng máu còn lại sau khi bị đấm
 
 
 func _ready() -> void:
+	# collision_mask = 0: Enemy KHÔNG coi Player (và các CharacterBody2D khác) là vật cản vật lý.
+	# Fix bug "sticking" 2026-07-08: 2 CharacterBody2D cùng layer/mask=1 chặn cứng nhau khi đè.
+	# Damage detection vẫn chạy qua Hurtbox (Area2D) - mask độc lập với body CharacterBody2D.
+	collision_mask = 0
 	current_hp = max_hp
 	health_bar.max_value = max_hp
 	health_bar.value = current_hp

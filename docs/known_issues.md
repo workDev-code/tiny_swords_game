@@ -56,6 +56,38 @@ _(none)_
 
 ## Closed / resolved (lịch sử cho khỏi quên)
 
+### 2026-07-08 — Player & Enemy "sticking" khi đè nhau
+
+Triệu chứng: 2 `CharacterBody2D` (Player, Enemy) cùng `collision_layer=1`
+và `collision_mask=1` (default) chặn cứng nhau khi đứng sát — `move_and_slide()`
+không thể displace kinematic body khác → cả 2 đứng yên tại điểm tiếp xúc.
+
+Root cause: collision_layer/mask mặc định đụng nhau, không có separation logic
+ở cả `scripts/player.gd` lẫn `scripts/enemy.gd`. Hitbox/Hurtbox là Area2D —
+không tạo lực đẩy vật lý, chỉ phát overlap signal.
+
+Fix (phương án B theo người dùng duyệt 2026-07-08): set `collision_mask = 0`
+trong `_ready()` của cả Player và Enemy. CharacterBody2D không còn collide với
+bất kỳ body nào (không cần vì không gravity post-migration). Hit detection vẫn
+chạy qua Hitbox/Hurtbox (Area2D) — mask độc lập với CharacterBody2D mask.
+
+Verify: Godot 4.6.3 headless `node_2d.tscn` chạy 240 frame, exit 0, không
+error/warning.
+
+Trade-off (ghi để khỏi quên):
+- Player/Enemy giờ đi xuyên qua nhau. Đây là behavior mong muốn cho top-down
+  (tránh sticking), nhưng nếu sau này muốn tái-enable push vật lý (vd: boss
+  cản đường), cần đặt collision_layer/mask riêng cho CharacterBody2D đó, không
+  revert `mask=0` cho tất cả.
+- Không còn collide với `FLoorBoudary` (StaticBody2D). Không vấn đề vì
+  post-migration không gravity, nhưng nếu tương lai có entity cần đứng trên
+  platform thì phải set mask riêng cho entity đó.
+
+File đã sửa:
+- `scripts/player.gd._ready()` (4 dòng mới, kèm comment).
+- `scripts/enemy.gd._ready()` (4 dòng mới, kèm comment).
+- **Không sửa** `player.tscn` / `enemy.tscn` (mục 5 AGENTS.md).
+
 ### 2026-07-06 — Movement migration sang top-down 4-dir
 
 File: `scripts/player.gd`, `scripts/enemy.gd`.

@@ -88,7 +88,7 @@ pattern_0 = SubResource("TileMapPattern_0hol4")
 [sub_resource type="WorldBoundaryShape2D" id="WorldBoundaryShape2D_0e48y"]
 
 [node name="Game" type="Node2D" unique_id=1724916428]
-position = Vector2(-99, 4)
+position = Vector2(-51, -115)
 metadata/_edit_horizontal_guides_ = [160.0]
 
 [node name="TileMap" type="TileMap" parent="." unique_id=2007504614]
@@ -102,10 +102,10 @@ position = Vector2(232, 497)
 up_direction = Vector2(0.9999969, 0.0024999925)
 
 [node name="Enemy" parent="." unique_id=1942245418 instance=ExtResource("2_0hol4")]
-position = Vector2(734, 220)
+position = Vector2(695, 631)
 
 [node name="Enemy2" parent="." unique_id=1727934692 instance=ExtResource("2_0hol4")]
-position = Vector2(634, 271)
+position = Vector2(561, 608)
 
 [node name="FLoorBoudary" type="StaticBody2D" parent="." unique_id=6764219]
 position = Vector2(98, 918)
