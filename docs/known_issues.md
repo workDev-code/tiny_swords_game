@@ -10,6 +10,52 @@ _Auto-maintained by AI._
 ## In progress
 _(none)_
 
+### 2026-07-15 — Player chạy xuyên qua cây (no collision với world)
+
+Triệu chứng: Player đi xuyên qua cây, không có cảm giác bị chặn bởi vật cản
+tĩnh trong scene.
+
+Root cause: `known_issues.md` mục "Closed 2026-07-08" đã set
+`collision_mask = 0` cho cả Player & Enemy để fix bug sticking. Mask=0 áp dụng
+cho *mọi* body, nên cây (StaticBody2D) cũng bị bỏ qua. Hitbox/Hurtbox (Area2D)
+không chặn body, chỉ phát overlap signal nên không bù được.
+
+Fix (phương án B theo người dùng duyệt 2026-07-15): chuyển sang **layered
+collision scheme** đặt hoàn toàn từ script (không sửa `player.tscn` /
+`enemy.tscn` / `tree.tscn` theo mục 5 AGENTS.md):
+
+| Body | layer | mask |
+|---|---|---|
+| Player | 1 << 0 (world) | 1 << 0 (world) |
+| Enemy  | 1 << 1 (enemy) | 0 (không chặn ai) |
+| Tree   | 1 (default, không sửa) | 1 (default, không sửa) |
+| FLoorBoudary | 1 (default) | 1 (default) |
+
+- Player `layer=1` + `mask=1`: bị cây (layer 1) chặn, không bị enemy (layer 2) chặn.
+- Enemy `mask=0`: không chặn player, không chặn cây (giữ intent 2026-07-08).
+- Tree giữ default 1/1 vì mục 5 AGENTS.md không cho sửa `.tscn` — default trùng
+  world layer nên khớp với mask của player mà không cần đụng scene.
+
+Verify: Godot 4.6.3 headless chạy `node_2d.tscn` 240 frame, exit 0, không
+error/warning. Cú chặn cảm giác thật cần playtest xác nhận (xem "Core-feel"
+bên dưới).
+
+Trade-off / Core-feel — cần người playtest:
+- Bán kính collision cây = 28 px (CircleShape2D trong `tree.tscn`), lệch xuống
+  `(3, 53)` để khớp gốc cây. Có thể cảm thấy "hẹp" so với sprite 192x192 nếu
+  visual hint rộng hơn — chưa tinh chỉnh vì đây là core-feel value.
+- Không sửa tree, không sửa player.tscn/enemy.tscn. Nếu sau này cần tái dùng
+  cây làm vật cản cho enemy (vd: enemy đi vòng quanh cây), đặt thêm mask từ
+  script của enemy hoặc set `collision_mask = 1 << 0` cho enemy.
+
+File đã sửa:
+- `scripts/player.gd._ready()`: đổi `collision_mask = 0` →
+  `collision_layer = 1 << 0; collision_mask = 1 << 0` (kèm comment mới).
+- `scripts/enemy.gd._ready()`: thêm `collision_layer = 1 << 1` (giữ mask = 0).
+- **Không sửa** `player.tscn`, `enemy.tscn`, `tree.tscn`, `node_2d.tscn`
+  (mục 5 AGENTS.md).
+- **Không sửa** `docs/decisions.md`, `docs/roadmap.md` (mục 4 AGENTS.md).
+
 <!-- TODO cho entry In progress trước đây đã xong — xem mục "Closed / resolved"
      ở cuối file để biết lịch sử. -->
 

@@ -20,6 +20,9 @@ Trạng thái code hiện tại của project, mapping từ scene tree sang scri
 ```
 res://node_2d.tscn  "Game" (Node2D)
 ├── TileMap               (TileMap, terrain ground)
+├── Tree1                 (Sprite2D, region 0,0,192,192,     pos user-tuned)
+├── Tree2                 (Sprite2D, region 192,0,192,192)
+├── Tree3                 (Sprite2D, region 0,192,192,192)
 ├── Player                (instance: res://player.tscn)
 ├── Enemy                 (instance: res://enemy.tscn)
 ├── Enemy2                (instance: res://enemy.tscn)
@@ -27,6 +30,14 @@ res://node_2d.tscn  "Game" (Node2D)
 │   └── CollisionShape2D  (WorldBoundaryShape2D)
 └── GameOver              (instance: res://game_over.tscn, CanvasLayer)
 ```
+
+Decor (thêm 2026-07-08, xem "Đổi gần đây"):
+- 3× Tree1/2/3 — sprite 192x192 lấy từ `Resources/Trees/Tree.png` (sheet 768x576,
+  layout giả định 4 cột × 3 hàng). Mỗi cây region khác nhau cho variety.
+- Vị trí do người dùng tinh chỉnh trong editor sau khi AI đặt ban đầu.
+- (Đã thử 1× Water1 dùng Water.png 64x64 scale 3x = 192x192 pool nhưng bị
+  xoá 2026-07-09 vì quá xấu — 1 ô vuông xanh phẳng không match phong cách
+  Tiny Swords có foam viền đảo. Cần foam tiles hoặc redesign tile.)
 
 Ghi chú:
 - `FLoorBoudary` (viết sai chính tả — không phải `FloorBoundary`) vẫn tồn tại
@@ -123,6 +134,29 @@ GameOver._on_player_died()
 - `_resolve_animation_name()` không còn nhánh `is_on_floor()` → không còn animation `jump`.
 - `_die()` đông cứng velocity = 0 (không còn "rơi xuống đất" vì không có gravity).
 
+## Collision layer scheme
+
+Cấu hình hoàn toàn từ `_ready()` trong script (không sửa `.tscn` theo mục 5
+AGENTS.md):
+
+| Body | layer (bits) | mask (bits) | Mục đích |
+|---|---|---|---|
+| Player (CharacterBody2D) | bit 0 (= 1, world) | bit 0 (= 1, world) | Bị cây chặn, không bị enemy chặn |
+| Enemy  (CharacterBody2D) | bit 1 (= 2, enemy) | 0 (không chặn ai) | Không chặn player, không chặn cây |
+| Tree   (StaticBody2D)    | 1 (default từ `tree.tscn`) | 1 (default) | Vật cản world |
+| FLoorBoudary (StaticBody2D) | 1 (default) | 1 (default) | World boundary (top-down không gravity, gần như vô dụng) |
+
+Quy ước:
+- **Bit 0 = world layer** (cây, floor, mọi StaticBody2D trang trí cản đường).
+- **Bit 1 = enemy layer** (chỉ các CharacterBody2D enemy).
+- Hitbox / Hurtbox là `Area2D`, layer/mask riêng — không liên quan đến body
+  collision này (xem "Signal flow" ở trên).
+- Khi thêm enemy type mới hoặc world decor khác: tuân theo quy ước trên,
+  set layer/mask từ script để không chạm `.tscn`.
+
+Lịch sử: xem `docs/known_issues.md` mục "Closed 2026-07-15 — Player chạy
+xuyên qua cây".
+
 ## Enemy → Movement model
 
 - `scripts/enemy.gd` không còn `var gravity`/`is_on_floor()`.
@@ -147,6 +181,12 @@ GameOver._on_player_died()
 
 ## Đổi gần đây
 
+- 2026-07-09: Phase 1 redesign TileMap — bỏ pattern checker đều,
+  thay bằng 1 đảo cỏ chính (186 cells) + 1 vệ tinh 2-cell. Player/Enemy/Tree
+  đều nằm trên grass. Vẫn dùng Tilemap_Flat tiles (chưa chuyển sang
+  Tilemap_Elevation — chờ visual-verify trước khi đổi atlas).
+- 2026-07-08: Thêm decor 3 cây + 1 vũng nước vào `node_2d.tscn`
+  (xem "Scene tree (main)" ở trên). Không động vào code/scripts.
 - 2026-07-06: Migration top-down 4-dir hoàn tất (`scripts/player.gd`,
   `scripts/enemy.gd`). Mapping chi tiết ở `docs/decisions.md` và
   `docs/known_issues.md` (task "In progress" đã đóng).

@@ -31,10 +31,15 @@ signal damaged(new_hp: int)  # Báo lượng máu còn lại sau khi bị đấm
 
 
 func _ready() -> void:
-	# collision_mask = 0: Enemy KHÔNG coi Player (và các CharacterBody2D khác) là vật cản vật lý.
-	# Fix bug "sticking" 2026-07-08: 2 CharacterBody2D cùng layer/mask=1 chặn cứng nhau khi đè.
+	# --- Collision layer scheme (xem docs/architecture.md) ---
+	# World layer  (bit 0, giá trị 1): cây, floor boundary.
+	# Enemy layer  (bit 1, giá trị 2): các CharacterBody2D enemy (chỉ enemy).
+	# Enemy mask = 0 -> không chặn player, không chặn cây (giữ intent bug 2026-07-08).
+	# Enemy layer riêng -> chắc chắn không ai mask nó ngoài world (nếu sau này cần).
 	# Damage detection vẫn chạy qua Hurtbox (Area2D) - mask độc lập với body CharacterBody2D.
+	collision_layer = 1 << 1
 	collision_mask = 0
+	# ---
 	current_hp = max_hp
 	health_bar.max_value = max_hp
 	health_bar.value = current_hp

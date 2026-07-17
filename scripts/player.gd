@@ -35,10 +35,14 @@ var current_animation: StringName = &"idle_side"
 
 # --- READY ---
 func _ready() -> void:
-	# collision_mask = 0: Player KHÔNG coi enemy (và các CharacterBody2D khác) là vật cản vật lý.
-	# Fix bug "sticking" 2026-07-08: 2 CharacterBody2D cùng layer/mask=1 chặn cứng nhau khi đè.
+	# --- Collision layer scheme (xem docs/architecture.md) ---
+	# World layer  (bit 0, giá trị 1): cây, floor boundary.
+	# Enemy layer  (bit 1, giá trị 2): các CharacterBody2D enemy.
+	# Player ở world layer, chỉ mask world -> bị cây chặn, không bị enemy chặn.
 	# Hit detection vẫn chạy qua Hitbox (Area2D) - mask độc lập với body CharacterBody2D.
-	collision_mask = 0
+	collision_layer = 1 << 0
+	collision_mask = 1 << 0
+	# ---
 	# Đăng ký Player vào bảng thông báo toàn cục để các Enemy có thể truy cập
 	PlayerGlobal.current_player = self
 
